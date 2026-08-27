@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pharmanomicon — Ask your doctor about a word that doesn't exist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0D2B4E; --ink:#1C2430; --clinical:#F4F8FA; --paper:#FFFFFF;
+    --teal:#11A5A0; --teal-deep:#0B7D79; --saffron:#F5B335; --line:#D6E0E6; --mute:#5F6E7B;
+    --display:'Sora',system-ui,sans-serif; --body:'IBM Plex Sans',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--clinical);color:var(--ink);font-family:var(--body);line-height:1.5;overflow-x:hidden;width:100%;max-width:100%}
+  *{min-width:0;max-width:100%}
+  img,svg,video{max-width:100%}
+  a{color:var(--teal-deep)}
+  button{font-family:inherit;cursor:pointer}
+  :focus-visible{outline:3px solid var(--saffron);outline-offset:2px}
+
+  header{background:var(--navy);color:#fff;padding:14px 14px;display:flex;flex-direction:column;gap:8px;width:100%;overflow:hidden}
+  header>div{max-width:520px;margin:0 auto;width:100%}
+  header h1{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:.02em;margin:0}
+  header h1 span{color:var(--saffron)}
+  header p{margin:0;font-size:13px;color:#B7C6D6;font-style:italic}
+  .stat-strip{font-family:var(--mono);font-size:11px;color:#B7C6D6;display:flex;gap:18px;flex-wrap:wrap}
+  .stat-strip b{color:#fff;font-weight:500}
+
+  main{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;padding:12px;width:100%;max-width:520px;margin:0 auto;overflow:hidden}
+  .lab{order:2}
+
+  .lab{display:flex;flex-direction:column;gap:18px}
+  .panel{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px;overflow:hidden;width:100%}
+  .panel h2{font-family:var(--display);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin:0 0 12px;font-weight:600}
+  label{display:block;font-size:13px;font-weight:500;margin:10px 0 4px}
+  label small{font-family:var(--mono);color:var(--mute);font-weight:400;float:right}
+  input[type=range]{width:100%;accent-color:var(--teal)}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff}
+  .chip input{accent-color:var(--teal)}
+
+  .bars{display:grid;grid-template-columns:repeat(26,minmax(0,1fr));gap:1px;align-items:end;height:90px;margin-top:6px}
+  .bar{position:relative;display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+  .bar .pharma{background:var(--teal);width:100%;border-radius:2px 2px 0 0;transition:height .4s}
+  .bar .eng{position:absolute;left:0;right:0;border-top:2px dashed var(--saffron);pointer-events:none}
+  .bar-labels{display:grid;grid-template-columns:repeat(26,minmax(0,1fr));overflow:hidden;gap:1px;font-family:var(--mono);font-size:8px;text-align:center;color:var(--mute);margin-top:3px}
+  .legend{font-size:11px;color:var(--mute);margin-top:8px;display:flex;gap:14px}
+  .legend i{display:inline-block;width:12px;height:8px;background:var(--teal);border-radius:2px;margin-right:4px;vertical-align:middle}
+  .legend i.e{background:none;border-top:2px dashed var(--saffron);height:0}
+  .kv{font-family:var(--mono);font-size:11px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px 12px}
+  .kv span b{color:var(--teal-deep);font-weight:500}
+  .findings{font-size:12.5px;color:var(--mute);margin-top:10px;line-height:1.45;overflow-wrap:anywhere}
+  .findings b{color:var(--ink);font-weight:600}
+  textarea{width:100%;min-height:120px;font-family:var(--mono);font-size:11.5px;border:1px solid var(--line);border-radius:6px;padding:8px;resize:vertical}
+  details summary{cursor:pointer;font-size:13px;font-weight:500;color:var(--teal-deep)}
+  .btn{background:var(--navy);color:#fff;border:0;border-radius:8px;padding:10px 16px;font-weight:600;font-size:14px}
+  .btn.secondary{background:#fff;color:var(--navy);border:1px solid var(--line)}
+  .btn.big{background:var(--teal);font-family:var(--display);font-size:16px;padding:14px 22px;letter-spacing:.02em}
+  .btn:hover{filter:brightness(1.08)}
+
+  /* ---- the ad ---- */
+  .stage{display:flex;flex-direction:column;gap:18px}
+  .ad{background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden;width:100%;box-shadow:0 10px 30px rgba(13,43,78,.08)}
+  .hero{position:relative;padding:24px 16px 22px;min-height:200px;color:#fff;
+        background:linear-gradient(160deg,#0D2B4E 0%,#11667E 55%,#8AC7B6 100%);overflow:hidden}
+  .hero::before{content:"";position:absolute;inset:auto -10% -55% -10%;height:70%;border-radius:50%;background:#DDEFE5;opacity:.9}
+  .hero::after{content:"";position:absolute;right:8%;top:12%;width:90px;height:90px;border-radius:50%;background:var(--saffron);opacity:.9;filter:blur(1px)}
+  .hero .rx{position:relative;z-index:1}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;opacity:.85}
+  .brand{font-family:var(--display);font-weight:800;font-size:clamp(30px,10vw,56px);overflow-wrap:anywhere;line-height:1;letter-spacing:-.02em;margin:8px 0 4px;text-transform:uppercase;transition:opacity .25s}
+  .brand sup{font-size:.28em;vertical-align:top;font-weight:400;margin-left:2px}
+  .generic{font-family:var(--body);font-style:italic;font-size:15px;opacity:.9}
+  .tagline{position:relative;z-index:1;margin:22px 0 0;font-family:var(--display);font-weight:600;font-size:clamp(16px,4.5vw,20px);color:var(--navy);max-width:520px;line-height:1.25}
+  .body{padding:16px;display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+  .body h3{font-family:var(--display);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal-deep);margin:0 0 8px}
+  .indication{font-size:16px;line-height:1.5}
+  .indication b{color:var(--navy)}
+  .fine{font-size:12.5px;color:#3B4956;line-height:1.5;overflow-wrap:anywhere}
+  .fine ul{padding-left:18px;margin:6px 0 10px;columns:1}
+  .fine li{margin:2px 0}
+  .warn{border-left:3px solid var(--saffron);padding-left:10px;margin-top:10px;font-weight:500}
+  .ticker-wrap{background:var(--navy);color:#fff;overflow:hidden;width:100%;max-width:100%;white-space:nowrap;font-family:var(--mono);font-size:12px;padding:10px 0;border-top:1px solid #234}
+  .ticker{display:inline-block;animation:scroll linear infinite;will-change:transform}
+  @keyframes scroll{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
+  @media (prefers-reduced-motion:reduce){.ticker{animation:none;padding:0 16px;white-space:normal;display:block}}
+
+  .verdict{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;width:100%}
+  .verdict .card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .verdict .n{font-family:var(--display);font-size:22px;overflow-wrap:anywhere;font-weight:800;color:var(--navy);line-height:1.1}
+  .verdict .l{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono)}
+  .verdict .d{font-size:12px;color:var(--mute);margin-top:4px}
+
+  .history{display:flex;flex-wrap:wrap;gap:8px}
+  .history button{background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-family:var(--display);font-weight:600;font-size:13px;color:var(--navy)}
+  .history button:hover{border-color:var(--teal)}
+  .empty{font-size:13px;color:var(--mute)}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .toast{font-size:12px;color:var(--teal-deep);font-family:var(--mono)}
+  footer{padding:12px 14px 40px;font-size:12px;color:var(--mute);max-width:520px;margin:0 auto;overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>PHARMA<span>NOMICON</span></h1>
+    <p>Ask your doctor about a word that doesn't exist.</p>
+  </div>
+  <div class="stat-strip" id="strip"></div>
+</header>
+
+<main>
+  <aside class="lab">
+    <div class="panel">
+      <h2>Generator</h2>
+      <button class="btn big" id="go" style="width:100%">Generate a drug</button>
+      <label>Novelty <small id="tempV">1.0</small></label>
+      <input type="range" id="temp" min="0.4" max="2.2" step="0.1" value="1.0">
+      <div class="findings" style="margin-top:2px">Low = hugs the real corpus. High = flattens the odds so rarer letter sequences get a shot.</div>
+      <label>Rare-letter boost <small id="boostV">1.5×</small></label>
+      <input type="range" id="boost" min="1" max="4" step="0.25" value="1.5">
+      <div class="findings" style="margin-top:2px">Multiplies the odds of X, Z, Q, V, Y, K, J. Industry default is already high; this makes it worse.</div>
+      <label>Length <small id="lenV">5–9</small></label>
+      <div class="row">
+        <input type="range" id="lmin" min="4" max="8" value="5" style="flex:1">
+        <input type="range" id="lmax" min="6" max="12" value="9" style="flex:1">
+      </div>
+      <label>Delivery</label>
+      <div class="row" id="forms"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Corpus: letter frequency</h2>
+      <div class="bars" id="bars"></div>
+      <div class="bar-labels" id="barLabels"></div>
+      <div class="legend"><span><i></i>Advertised drug names</span><span><i class="e"></i>Everyday English</span></div>
+      <div class="findings" id="findings"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Corpus: structure</h2>
+      <div class="kv" id="kv"></div>
+      <div class="findings" id="bigrams"></div>
+    </div>
+
+    <div class="panel">
+      <details>
+        <summary>Edit the corpus (<span id="corpusN"></span> names)</summary>
+        <div class="findings">One name per line or comma-separated. Retraining recomputes every chart and the Markov model.</div>
+        <textarea id="corpus"></textarea>
+        <div class="row" style="margin-top:8px">
+          <button class="btn secondary" id="retrain">Retrain</button>
+          <button class="btn secondary" id="reset">Restore default</button>
+        </div>
+      </details>
+    </div>
+  </aside>
+
+  <section class="stage">
+    <div class="ad" id="ad">
+      <div class="hero">
+        <div class="rx">
+          <div class="eyebrow" id="eyebrow">Now approved</div>
+          <div class="brand" id="brand">PRESS GENERATE<sup>™</sup></div>
+          <div class="generic" id="genericName">(a generic name will appear here)</div>
+        </div>
+        <p class="tagline" id="tagline">Ask your doctor if a made-up word is right for you.</p>
+      </div>
+      <div class="body">
+        <div>
+          <h3>What it treats</h3>
+          <div class="indication" id="indication">Press the button. The corpus is already trained.</div>
+          <h3 style="margin-top:22px">Important safety information</h3>
+          <div class="fine" id="safety"></div>
+        </div>
+        <div>
+          <h3>Side effects may include</h3>
+          <div class="fine" id="sides"></div>
+        </div>
+      </div>
+      <div class="ticker-wrap"><div class="ticker" id="ticker">Side effects will scroll here at a legally indefensible speed.</div></div>
+    </div>
+
+    <div class="verdict" id="verdict"></div>
+
+    <div class="panel">
+      <div class="toolbar">
+        <h2 style="margin:0;flex:1">History</h2>
+        <button class="btn secondary" id="copy">Copy this drug</button>
+        <button class="btn secondary" id="batch">Generate 10 names</button>
+        <span class="toast" id="toast"></span>
+      </div>
+      <div class="history" id="history" style="margin-top:12px"><span class="empty">Nothing yet. Every drug you generate lands here; click one to bring it back.</span></div>
+    </div>
+  </section>
+</main>
+<footer>
+  Letter-frequency findings from Carico et al., <i>Exploratory Research in Clinical and Social Pharmacy</i> (2022), which analyzed every US brand name approved 1985–2020: A, V, X, and Z overrepresented; E, H, T, and S underrepresented; V, Y, Z rising over time. English baseline is Norvig's Google Books letter frequencies. Corpus is the current direct-to-consumer TV rotation plus historic heavy advertisers. Nothing here is a real drug. If it is, that is a coincidence and a problem for someone's trademark attorney.
+</footer>
+
+<script>
+// ---------- CORPUS ----------
+const DEFAULT_CORPUS = `Skyrizi Rinvoq Vraylar Wegovy Ozempic Zepbound Mounjaro Dupixent Humira Eliquis Xarelto Jardiance Trulicity Rexulti Caplyta Otezla Cosentyx Taltz Tremfya Entyvio Rybelsus Keytruda Opdivo Botox Nurtec Ubrelvy Qulipta Emgality Biktarvy Descovy Cabenuva Dovato Shingrix Prevnar Farxiga Linzess Trelegy Breztri Fasenra Nucala Tezspire Xolair Ingrezza Austedo Abilify Latuda Lybalvi Kisqali Verzenio Ibrance Enhertu Leqvio Repatha Nexletol Gemtesa Myrbetriq Vyepti Xeljanz Kesimpta Ocrevus Briumvi Zeposia Sunosi Xywav Quviviq Dayvigo Belsomra Cibinqo Adbry Zoryve Vtama Litfulo Opzelura Sotyktu Bimzelx Omvoh Velsipity Wakix Zurzuvae Rezdiffra Journavx Lumryz Xdemvy Vyvgart Voquezna Eylea Vabysmo Izervay Syfovre Tepezza Uplizna Leqembi Kisunla Lyrica Chantix Cialis Viagra Nexium Crestor Lipitor Celebrex Enbrel Stelara Symbicort Dulera Anoro Trintellix Vyvanse Qelbree Movantik Viberzi Xifaxan Prolia Evenity Tymlos Reblozyl Camzyos Verquvo Kerendia Inpefa Entresto Brilinta Praluent Apretude Sunlenca Juluca Triumeq Genvoya Odefsey Truvada Xtandi Erleada Nubeqa Lynparza Tagrisso Imbruvica Calquence Brukinsa Jakafi Tarpeyo Filspari Livmarli Bylvay Skytrofa Ngenla Sogroya Winrevair Ohtuvayre Nemluvio Ebglyss Yeztugo Attruby Wainua Amvuttra Vyndamax Rytelo Cobenfy Auvelity Spravato Nuplazid Ajovy Aimovig Xiidra Restasis Vuity Lumigan Rhopressa Orilissa Myfembree Oriahnn Veozah Addyi Vyleesi Xyzal Zyrtec Flonase Nasacort Dupixent Adbry Tyenne Actemra Orencia Simponi Cimzia Kevzara Olumiant Xeljanz Saphnelo Benlysta Lupkynis Tavneos Filspari Fabhalta Empaveli Ultomiris Soliris Vyvgart Rystiggo Zilbrysq Evrysdi Spinraza Zolgensma Elevidys Duvyzat Agamree Emflaza Skyclarys Relyvrio Radicava Qalsody Leqembi Aduhelm Nuedexta Namzaric Rexulti Vraylar Caplyta Lybalvi Ingrezza Austedo Xenazine Nuplazid Nourianz Inbrija Ongentys Xadago Rytary Duopa Vyalev`;
+
+// Norvig letter frequencies (Google Books corpus), percent
+const ENGLISH = {e:12.49,t:9.28,a:8.04,o:7.64,i:7.57,n:7.23,s:6.51,r:6.28,h:5.05,l:4.07,d:3.82,c:3.34,u:2.73,m:2.51,f:2.40,p:2.14,g:1.87,w:1.68,y:1.66,b:1.48,v:1.05,k:0.54,x:0.23,j:0.16,q:0.12,z:0.09};
+const ALPHA = 'abcdefghijklmnopqrstuvwxyz'.split('');
+const VOWELS = new Set('aeiouy'.split(''));
+const RARE = new Set('xzqvykj'.split(''));
+
+// ---------- CONTENT POOLS ----------
+const FORMS = ['once-daily pill','once-weekly injection','nasal spray','extended-release capsule','dissolvable film','patch you forget is there','chewable','inhaler','monthly infusion','under-the-tongue tablet'];
+const CONDITIONS = [
+  // real-adjacent
+  'moderate to severe plaque psoriasis','type 2 diabetes','chronic migraine','overactive bladder','moderate to severe eczema','ulcerative colitis','narcolepsy','tardive dyskinesia','chronic dry eye','major depressive disorder','restless legs syndrome','irritable bowel syndrome with constipation','generalized anxiety disorder','high LDL cholesterol','hidradenitis suppurativa','atopic dermatitis','vitiligo','uterine fibroids','moderate to severe hot flashes','excessive daytime sleepiness','severe asthma','wet age-related macular degeneration',
+  // absurd
+  'Restless Elbow Syndrome','Chronic Sunday Dread','Persistent Tab Hoarding Disorder','Idiopathic Sock Loss','Post-Meeting Fatigue Syndrome','Recurrent Cart Abandonment','Generalized Reply-All Anxiety','Seasonal Affective Dad Jokes','Adult-Onset Lawn Envy','Treatment-Resistant Group Chat Silence','Intermittent Password Amnesia','Late-Stage Podcast Backlog','Acute Parking Lot Rage','Chronic Tupperware Lid Mismatch','Moderate to Severe Small Talk Intolerance','Early-Onset Thermostat Disputes','Idiopathic Printer Hostility','Recurrent Phantom Phone Vibration','Persistent Unsubscribe Failure','Age-Related Music Opinion Stiffening','Nocturnal Fridge Wandering','Ambient Dread of the Check Engine Light','Chronic Middle-Seat Syndrome','Refractory Voicemail Avoidance','Post-Vacation Inbox Shock','Bilateral Sock Drawer Asymmetry','Progressive Remote Control Misplacement','Compulsive Weather App Refreshing','Moderate to Severe Standing Desk Regret','Recurrent Grill Lighter Failure','Chronic Youth Sports Bleacher Back','Idiopathic Yard Sale Tachycardia'
+];
+const QUALIFIERS = ['in adults','in adults and children 12 years and older','in adults who have tried at least one other treatment','in adults with an inadequate response to sighing','in adults who are otherwise fine','in patients whose symptoms persist despite a sternly worded email','in adults 18 and older who have seen the commercial at least twice'];
+const TAGLINES = [
+  'Ask your doctor about {N}.','{N}. Because tomorrow starts with fewer symptoms.','With {N}, you could be walking through a meadow by Tuesday.','{N}. Move forward. Or sideways. Any direction, really.','Say yes to {N}. Say it slowly, so the pharmacist understands.','{N}: clinically proven to be a word.','Take back your afternoons with {N}.','{N}. The feeling of a slow-motion picnic, in pill form.','One {N}. Zero explanations to your in-laws.','{N} is not for everyone. It is for you, specifically. We checked.','This is your life on {N}: there is a golden retriever now.','{N}. Finally, a name harder to spell than your condition.'
+];
+const MILD = ['headache','nausea','dry mouth','dizziness','fatigue','joint pain','runny nose','mild confusion about which day it is','a sudden fondness for kayaking','an urge to repaint the guest room','upper respiratory infection','constipation','injection-site redness','trouble sleeping','vivid dreams about spreadsheets','loss of appetite','increased appetite, specifically for pretzels','unexplained humming','heightened opinions about lawn care','temporary inability to remember passwords','a feeling that someone is standing behind you','excessive agreement with podcasts','muscle spasms','mild sunburn even indoors','tingling in the hands','sudden clarity about a 2009 argument','a taste of pennies','slight drift toward jazz','the sensation of having forgotten to lock the car','decreased interest in sequels','ringing in the ears','back pain','sneezing at inopportune moments','difficulty pronouncing this medication'];
+const SERIOUS = ['serious allergic reactions, including swelling of the face, lips, tongue, or throat','thoughts of joining a cover band','liver problems','changes in mood or behavior, including an unwavering belief that you could fix the fence yourself','new or worsening heart failure','a brief but complete loss of the ability to parallel park','severe skin reactions','sudden, unexplained proficiency in canoeing','increased risk of infections','the appearance of a golden retriever you do not remember adopting','pancreatitis','irreversible enthusiasm for pickleball','low blood sugar','tremors','fainting','seizures','a compulsion to finish other people\u2019s crossword puzzles','vision changes, including seeing the meadow from the commercial while at work','kidney problems','muscle weakness','gallbladder problems','hearing the phrase \u201cask your doctor\u201d when no one has spoken','blood clots','rare cases of waking up in a different, nicer kitchen'];
+const TELL_DOC = ['have or have had liver problems','are pregnant, plan to become pregnant, or have met someone who is','have a history of fainting near lawn equipment','take blood thinners, antidepressants, or advice from a brother-in-law','have ever been to a Sandals resort','are allergic to any of the seventeen inactive ingredients','plan to operate heavy machinery, including a riding mower','have a known sensitivity to gentle acoustic guitar'];
+const GENERIC_SUFFIX = ['mab','tinib','glutide','gliflozin','lisib','ciclib','sertib','cept','rsen','parib','zumab','ximab','lutamide','tegravir','prazole','statin','sartan','dipine','gepant','ditan','tide','ase','lanib','nercept','platin','vudine','fenacin','pirone','zolam','tadine'];
+
+// ---------- MODEL ----------
+let CORPUS = [];
+let MODEL = {trans:{}, lengths:[], inits:{}, freq:{}, bigrams:{}, total:0, set:new Set()};
+
+function parseCorpus(text){
+  return [...new Set(text.split(/[\s,;]+/).map(s=>s.trim()).filter(s=>/^[A-Za-z]{3,}$/.test(s)).map(s=>s[0].toUpperCase()+s.slice(1).toLowerCase()))];
+}
+function train(names){
+  const trans={}, inits={}, freq={}, bigrams={}, lengths=[];
+  let total=0;
+  for(const n of names){
+    const w=n.toLowerCase();
+    lengths.push(w.length);
+    inits[w[0]]=(inits[w[0]]||0)+1;
+    for(const ch of w){freq[ch]=(freq[ch]||0)+1; total++;}
+    for(let i=0;i<w.length-1;i++){const b=w.slice(i,i+2); bigrams[b]=(bigrams[b]||0)+1;}
+    const s='^^'+w+'$';
+    for(let i=2;i<s.length;i++){
+      const k=s.slice(i-2,i), c=s[i];
+      (trans[k] ||= {}); trans[k][c]=(trans[k][c]||0)+1;
+    }
+  }
+  return {trans,inits,freq,bigrams,lengths,total,set:new Set(names.map(n=>n.toLowerCase()))};
+}
+function weightedPick(obj, temp=1, boost=1){
+  let sum=0; const items=[];
+  for(const [k,v] of Object.entries(obj)){
+    let w=Math.pow(v,1/temp);
+    if(RARE.has(k)) w*=boost;
+    items.push([k,w]); sum+=w;
+  }
+  let r=Math.random()*sum;
+  for(const [k,w] of items){ r-=w; if(r<=0) return k; }
+  return items[items.length-1][0];
+}
+function pronounceable(w){
+  if(!/[aeiouy]/.test(w)) return false;
+  if(/(.)\1\1/.test(w)) return false;
+  if(/[^aeiouy]{4}/.test(w)) return false;
+  if(/[aeiou]{3}/.test(w)) return false;
+  const v=[...w].filter(c=>VOWELS.has(c)).length/w.length;
+  return v>=0.25 && v<=0.65;
+}
+function genWord(minL,maxL,temp,boost,tries=0){
+  let s='^^', out='';
+  while(out.length<maxL){
+    const k=s.slice(-2);
+    const dist=MODEL.trans[k];
+    if(!dist) break;
+    let d={...dist};
+    if(out.length<minL) delete d['$'];
+    if(Object.keys(d).length===0) break;
+    const c=weightedPick(d,temp,boost);
+    if(c==='$') break;
+    out+=c; s+=c;
+  }
+  const canEnd = !!(MODEL.trans[s.slice(-2)]||{})['$'];
+  const ok = out.length>=minL && out.length<=maxL && canEnd && pronounceable(out) && !MODEL.set.has(out);
+  if(!ok && tries<60) return genWord(minL,maxL,temp,boost,tries+1);
+  return out;
+}
+function genGeneric(brand){
+  // Generic names avoid X/Z initials and H/J/K/W; stem from a shorter Markov run, then an INN-style suffix
+  let stem='';
+  for(let i=0;i<30 && !stem;i++){
+    const w=genWord(3,5,1.3,0.6);
+    if(w && !/^[xzhjkw]/.test(w) && /[^aeiouy]$/.test(w)) stem=w;
+  }
+  if(!stem) stem=brand.toLowerCase().slice(0,3).replace(/[xzhjkw]/,'p');
+  const suf=pick(GENERIC_SUFFIX);
+  const joiner = VOWELS.has(suf[0]) ? '' : pick(['a','o','i','u','e']);
+  return stem+joiner+suf;
+}
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;};
+function cap(s){return s[0].toUpperCase()+s.slice(1);}
+
+// Carico-style unusualness: mean English frequency per letter (lower = more pharma)
+function englishScore(w){ return [...w.toLowerCase()].reduce((a,c)=>a+(ENGLISH[c]||0),0)/w.length; }
+function corpusMeanScore(){ return CORPUS.reduce((a,n)=>a+englishScore(n),0)/CORPUS.length; }
+
+// ---------- DRUG ASSEMBLY ----------
+function makeDrug(){
+  const minL=+lmin.value, maxL=+lmax.value, temp=+tempEl.value, boost=+boostEl.value;
+  const raw=genWord(minL,maxL,temp,boost);
+  const brand=cap(raw);
+  const form=document.querySelector('input[name=form]:checked')?.value || pick(FORMS);
+  const cond=pick(CONDITIONS);
+  const qual=pick(QUALIFIERS);
+  const sides=shuffle(MILD).slice(0,5+Math.floor(Math.random()*4));
+  const serious=shuffle(SERIOUS).slice(0,2+Math.floor(Math.random()*3));
+  const tell=shuffle(TELL_DOC).slice(0,2);
+  return {brand, generic:genGeneric(brand), form, cond, qual, tagline:pick(TAGLINES).replaceAll('{N}',brand.toUpperCase()), sides, serious, tell,
+          eyebrow:pick(['Now approved','New from a company you\u2019ve never heard of','Once weekly','Now in a pen','Ask about the savings card','Not a cure. A lifestyle.'])};
+}
+
+// ---------- RENDER ----------
+const $=id=>document.getElementById(id);
+const tempEl=$('temp'), boostEl=$('boost'), lmin=$('lmin'), lmax=$('lmax');
+let HISTORY=[]; let CURRENT=null;
+
+function renderDrug(d){
+  CURRENT=d;
+  $('eyebrow').textContent=d.eyebrow;
+  $('brand').style.opacity=0;
+  setTimeout(()=>{$('brand').innerHTML=`${d.brand.toUpperCase()}<sup>\u2122</sup>`;$('brand').style.opacity=1;},120);
+  $('genericName').textContent=`(${d.generic}) ${d.form}`;
+  $('tagline').textContent=d.tagline;
+  $('indication').innerHTML=`<b>${d.brand}</b> is a ${d.form} for the treatment of <b>${d.cond}</b> ${d.qual}.`;
+  $('sides').innerHTML=`<ul>${d.sides.map(s=>`<li>${s}</li>`).join('')}</ul><div class="warn">Serious side effects may include ${d.serious.join('; ')}.</div>`;
+  $('safety').innerHTML=`Do not take ${d.brand} if you are allergic to ${d.brand}, ${d.generic}, or the concept of ${d.brand}. Tell your doctor if you ${d.tell[0]}, or ${d.tell[1]}. ${d.brand} may affect the way other medicines work, and other medicines may affect the way ${d.brand} feels about itself. Do not stop taking ${d.brand} without talking to your doctor, your pharmacist, and at least one person who will remember this conversation.`;
+  const all=[...d.sides,...d.serious];
+  $('ticker').textContent=`${d.brand.toUpperCase()} may cause ${all.join(', ')}. Individual results may vary. \u00a0\u00a0\u2022\u00a0\u00a0 `.repeat(2);
+  $('ticker').style.animationDuration=Math.max(18, all.join(' ').length/9)+'s';
+  renderVerdict(d);
+}
+function renderVerdict(d){
+  const w=d.brand.toLowerCase();
+  const sc=englishScore(w), mean=corpusMeanScore();
+  const rare=[...w].filter(c=>RARE.has(c)).length;
+  const nearest=CORPUS.map(n=>[n,lev(n.toLowerCase(),w)]).sort((a,b)=>a[1]-b[1])[0];
+  $('verdict').innerHTML=`
+    <div class="card"><div class="n">${sc.toFixed(2)}</div><div class="l">Unusualness</div><div class="d">Mean English frequency per letter. Corpus average ${mean.toFixed(2)}; \u201cpaper\u201d scores 6.07. Lower is more pharma.</div></div>
+    <div class="card"><div class="n">${rare}</div><div class="l">Rare letters</div><div class="d">X, Z, Q, V, Y, K, or J. Zero is a missed marketing opportunity.</div></div>
+    <div class="card"><div class="n">${w.length}</div><div class="l">Letters</div><div class="d">Corpus mean ${(MODEL.lengths.reduce((a,b)=>a+b,0)/MODEL.lengths.length).toFixed(1)}. Trademarks trend short.</div></div>
+    <div class="card"><div class="n">${nearest[0]}</div><div class="l">Nearest real drug</div><div class="d">Edit distance ${nearest[1]}. Anything under 2 is a phone call from Legal.</div></div>`;
+}
+function lev(a,b){const m=[];for(let i=0;i<=a.length;i++){m[i]=[i];}for(let j=1;j<=b.length;j++){m[0][j]=j;}for(let i=1;i<=a.length;i++){for(let j=1;j<=b.length;j++){m[i][j]=Math.min(m[i-1][j]+1,m[i][j-1]+1,m[i-1][j-1]+(a[i-1]===b[j-1]?0:1));}}return m[a.length][b.length];}
+
+function renderStats(){
+  const f=MODEL.freq, total=MODEL.total;
+  const pct=c=>100*(f[c]||0)/total;
+  const maxP=Math.max(...ALPHA.map(pct),...Object.values(ENGLISH));
+  $('bars').innerHTML=ALPHA.map(c=>`<div class="bar" title="${c.toUpperCase()}: drugs ${pct(c).toFixed(1)}% vs English ${ENGLISH[c]}%"><div class="eng" style="bottom:${100*ENGLISH[c]/maxP}%"></div><div class="pharma" style="height:${100*pct(c)/maxP}%"></div></div>`).join('');
+  $('barLabels').innerHTML=ALPHA.map(c=>`<span>${c}</span>`).join('');
+  const ratios=ALPHA.map(c=>[c,pct(c)/ENGLISH[c],pct(c)]).filter(x=>x[2]>0);
+  const over=ratios.filter(x=>x[1]>1.4).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const under=ratios.filter(x=>x[1]<0.7).sort((a,b)=>a[1]-b[1]).slice(0,5);
+  $('findings').innerHTML=`<b>Overrepresented:</b> ${over.map(x=>`${x[0].toUpperCase()} (${x[1].toFixed(1)}\u00d7)`).join(', ')}.<br><b>Underrepresented:</b> ${under.map(x=>`${x[0].toUpperCase()} (${x[1].toFixed(1)}\u00d7)`).join(', ')}.<br>The 1985\u20132020 study of all approved names found A, V, X, Z high and E, H, T, S low; this TV-ad subset leans even harder on Z, Q, X.`;
+  const inits=Object.entries(MODEL.inits).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const vowelStart=CORPUS.filter(n=>VOWELS.has(n[0].toLowerCase())).length;
+  const endVowel=CORPUS.filter(n=>/[aeiouy]$/i.test(n)).length;
+  const lens=MODEL.lengths; const mean=lens.reduce((a,b)=>a+b,0)/lens.length;
+  const lenDist={}; lens.forEach(l=>lenDist[l]=(lenDist[l]||0)+1);
+  const mode=Object.entries(lenDist).sort((a,b)=>b[1]-a[1])[0][0];
+  const syll=CORPUS.map(n=>(n.toLowerCase().match(/[aeiouy]+/g)||[]).length); const sm=syll.reduce((a,b)=>a+b,0)/syll.length;
+  $('kv').innerHTML=`<span>names <b>${CORPUS.length}</b></span><span>mean length <b>${mean.toFixed(1)}</b></span><span>modal length <b>${mode}</b></span><span>syllables <b>${sm.toFixed(1)}</b></span><span>start w/ vowel <b>${(100*vowelStart/CORPUS.length).toFixed(0)}%</b></span><span>end w/ vowel <b>${(100*endVowel/CORPUS.length).toFixed(0)}%</b></span>`;
+  const bg=Object.entries(MODEL.bigrams).sort((a,b)=>b[1]-a[1]).slice(0,14);
+  $('bigrams').innerHTML=`<b>Top initials:</b> ${inits.map(x=>`${x[0].toUpperCase()} (${x[1]})`).join(', ')}.<br><b>Top letter pairs:</b> ${bg.map(x=>`<span style="font-family:var(--mono)">${x[0]}</span>`).join(' ')}.<br>The generator is an order-2 Markov chain over these names, so every 3-letter sequence it emits exists somewhere in a real drug.`;
+  $('corpusN').textContent=CORPUS.length;
+  $('strip').innerHTML=`<span>corpus <b>${CORPUS.length}</b></span><span>Z rate <b>${(pct('z')/ENGLISH.z).toFixed(0)}\u00d7 English</b></span><span>X rate <b>${(pct('x')/ENGLISH.x).toFixed(0)}\u00d7</b></span><span>Q rate <b>${(pct('q')/ENGLISH.q).toFixed(0)}\u00d7</b></span>`;
+}
+function renderHistory(){
+  if(!HISTORY.length) return;
+  $('history').innerHTML=HISTORY.map((d,i)=>`<button data-i="${i}">${d.brand}</button>`).join('');
+}
+function setCorpus(text){
+  CORPUS=parseCorpus(text);
+  if(CORPUS.length<10){ $('toast').textContent='Need at least 10 names to train.'; return; }
+  MODEL=train(CORPUS);
+  $('corpus').value=CORPUS.join('\n');
+  renderStats();
+  $('toast').textContent=`Trained on ${CORPUS.length} names.`;
+  setTimeout(()=>$('toast').textContent='',2500);
+}
+
+// ---------- WIRING ----------
+$('forms').innerHTML=`<label class="chip"><input type="radio" name="form" value="" checked>random</label>`+FORMS.slice(0,5).map(f=>`<label class="chip"><input type="radio" name="form" value="${f}">${f}</label>`).join('');
+$('go').onclick=()=>{const d=makeDrug(); HISTORY.unshift(d); HISTORY=HISTORY.slice(0,40); renderDrug(d); renderHistory();};
+$('batch').onclick=()=>{ for(let i=0;i<10;i++){HISTORY.unshift(makeDrug());} HISTORY=HISTORY.slice(0,40); renderDrug(HISTORY[0]); renderHistory(); };
+$('history').onclick=e=>{const b=e.target.closest('button'); if(b) renderDrug(HISTORY[+b.dataset.i]);};
+$('copy').onclick=async()=>{ if(!CURRENT){$('toast').textContent='Generate something first.';return;}
+  const d=CURRENT; const txt=`${d.brand}\u2122 (${d.generic})\n${d.tagline}\n\n${d.brand} is a ${d.form} for the treatment of ${d.cond} ${d.qual}.\n\nSide effects may include: ${d.sides.join(', ')}.\nSerious side effects may include ${d.serious.join('; ')}.\n\nTell your doctor if you ${d.tell[0]}, or ${d.tell[1]}.`;
+  try{ await navigator.clipboard.writeText(txt); $('toast').textContent='Copied.'; }catch{ $('toast').textContent='Clipboard blocked; select and copy manually.'; }
+  setTimeout(()=>$('toast').textContent='',2000); };
+tempEl.oninput=()=>$('tempV').textContent=(+tempEl.value).toFixed(1);
+boostEl.oninput=()=>$('boostV').textContent=(+boostEl.value).toFixed(2).replace(/\.?0+$/,'')+'\u00d7';
+const syncLen=()=>{ if(+lmin.value>+lmax.value) lmax.value=lmin.value; $('lenV').textContent=`${lmin.value}\u2013${lmax.value}`; };
+lmin.oninput=syncLen; lmax.oninput=syncLen;
+$('retrain').onclick=()=>setCorpus($('corpus').value);
+$('reset').onclick=()=>setCorpus(DEFAULT_CORPUS);
+document.addEventListener('keydown',e=>{ if(e.key===' ' && !['TEXTAREA','INPUT','BUTTON'].includes(e.target.tagName)){e.preventDefault();$('go').click();} });
+
+setCorpus(DEFAULT_CORPUS);
+</script>
+</body>
+</html>
