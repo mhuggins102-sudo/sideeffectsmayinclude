@@ -13,7 +13,8 @@
     --display:'Sora',system-ui,sans-serif; --body:'IBM Plex Sans',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;background:var(--clinical);color:var(--ink);font-family:var(--body);line-height:1.5;overflow-x:hidden;width:100%;max-width:100%}
+  /* overflow-x:clip (not hidden) — hidden makes html/body scroll containers, which kills position:sticky on the header */
+  html,body{margin:0;background:var(--clinical);color:var(--ink);font-family:var(--body);line-height:1.5;overflow-x:clip;width:100%;max-width:100%}
   html{scroll-behavior:smooth}
   @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
   *{min-width:0;max-width:100%}
@@ -22,11 +23,15 @@
   button{font-family:inherit;cursor:pointer}
   :focus-visible{outline:3px solid var(--saffron);outline-offset:2px}
 
-  header{background:var(--navy);color:#fff;padding:14px 14px;display:flex;flex-direction:column;gap:8px;width:100%;overflow:hidden}
-  header>div{max-width:520px;margin:0 auto;width:100%}
+  header{background:var(--navy);color:#fff;padding:10px 14px;width:100%;overflow:hidden;position:sticky;top:0;z-index:40;box-shadow:0 2px 14px rgba(13,43,78,.28)}
+  .head-in{max-width:520px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px}
   header h1{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:.02em;margin:0}
   header h1 span{color:var(--saffron)}
   header p{margin:0;font-size:13px;color:#B7C6D6;font-style:italic}
+  .tools{display:flex;gap:6px;flex:none}
+  .tools button{width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;display:flex;align-items:center;justify-content:center;padding:0}
+  .tools button:hover{background:rgba(255,255,255,.18)}
+  .tools svg{width:20px;height:20px}
 
   main{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;padding:12px;width:100%;max-width:520px;margin:0 auto;overflow:hidden}
   .lab{order:2}
@@ -42,6 +47,14 @@
   input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:var(--line)}
   input[type=range]::-moz-range-thumb{width:20px;height:20px;border:3px solid #fff;border-radius:50%;background:var(--teal);box-shadow:0 1px 4px rgba(13,43,78,.35)}
   select{width:100%;font-family:inherit;font-size:14px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+  .dual{position:relative;height:36px}
+  .dual .track{position:absolute;left:0;right:0;top:50%;height:6px;transform:translateY(-50%);border-radius:3px;background:var(--line)}
+  .dual .fill{position:absolute;top:50%;height:6px;transform:translateY(-50%);border-radius:3px;background:var(--teal)}
+  .dual input[type=range]{position:absolute;left:0;top:0;width:100%;pointer-events:none}
+  .dual input[type=range]::-webkit-slider-runnable-track{background:transparent}
+  .dual input[type=range]::-webkit-slider-thumb{pointer-events:auto}
+  .dual input[type=range]::-moz-range-track{background:transparent}
+  .dual input[type=range]::-moz-range-thumb{pointer-events:auto}
   .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 
   .bars{display:grid;grid-template-columns:repeat(26,minmax(0,1fr));gap:1px;align-items:end;height:90px;margin-top:6px}
@@ -101,20 +114,32 @@
   .empty{font-size:13px;color:var(--mute)}
   .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
   .toast{font-size:12px;color:var(--teal-deep);font-family:var(--mono)}
-  .fabs{position:fixed;right:14px;bottom:14px;display:flex;flex-direction:column;gap:8px;z-index:50}
-  .fabs button{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--navy);color:#fff;font-size:17px;box-shadow:0 6px 18px rgba(13,43,78,.25);display:flex;align-items:center;justify-content:center;padding:0}
-  .fabs button.alt{background:#fff;color:var(--navy)}
-  #toTop{opacity:0;pointer-events:none;transition:opacity .25s}
-  #toTop.show{opacity:1;pointer-events:auto}
-  .ad,#stats{scroll-margin-top:10px}
-  footer{padding:12px 14px 90px;font-size:12px;color:var(--mute);max-width:520px;margin:0 auto;overflow-wrap:anywhere}
+  .modal{position:fixed;inset:0;background:rgba(13,43,78,.45);display:none;align-items:center;justify-content:center;z-index:60;padding:14px}
+  .modal.open{display:flex}
+  .sheet{background:var(--clinical);border:1px solid var(--line);border-radius:14px;max-width:520px;width:100%;max-height:80vh;overflow:auto;padding:14px;box-shadow:0 12px 40px rgba(13,43,78,.35)}
+  .sheet h2{font-family:var(--display);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin:0;font-weight:600}
+  .ad,#corpusSection{scroll-margin-top:calc(var(--headH,92px) + 8px)}
+  footer{padding:12px 14px 40px;font-size:12px;color:var(--mute);max-width:520px;margin:0 auto;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 <header>
-  <div>
-    <h1>PHARMA<span>NOMICON</span></h1>
-    <p>Ask your doctor about a word that doesn't exist.</p>
+  <div class="head-in">
+    <div>
+      <h1>PHARMA<span>NOMICON</span></h1>
+      <p>Ask your doctor about a word that doesn't exist.</p>
+    </div>
+    <nav class="tools" aria-label="Quick navigation">
+      <button id="navCorpus" title="Jump to the corpus" aria-label="Jump to the corpus">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      </button>
+      <button id="navTop" title="Back to top" aria-label="Back to top to generate a new drug">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+      </button>
+      <button id="navStats" title="Name scorecard" aria-label="Show the name scorecard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+      </button>
+    </nav>
   </div>
 </header>
 
@@ -132,15 +157,16 @@
       <input type="range" id="boost" min="1" max="4" step="0.25" value="1.5">
       <div class="findings" style="margin-top:2px">Multiplies the odds of X, Z, Q, V, Y, K, J. Industry default is already high; this makes it worse.</div>
       <label>Length <small id="lenV">5–9</small></label>
-      <div class="row">
-        <input type="range" id="lmin" min="4" max="8" value="5" style="flex:1">
-        <input type="range" id="lmax" min="6" max="12" value="9" style="flex:1">
+      <div class="dual">
+        <div class="track"></div><div class="fill" id="lenFill"></div>
+        <input type="range" id="lmin" min="4" max="12" value="5" aria-label="Minimum length">
+        <input type="range" id="lmax" min="4" max="12" value="9" aria-label="Maximum length">
       </div>
       <label for="formSel">Delivery</label>
       <select id="formSel"></select>
   </div>
 
-  <aside class="lab" id="stats">
+  <aside class="lab" id="corpusSection">
     <div class="panel">
       <h2>Corpus: letter frequency</h2>
       <div class="bars" id="bars"></div>
@@ -193,8 +219,6 @@
       <div class="ticker-wrap"><div class="ticker" id="ticker">Side effects will scroll here at a legally indefensible speed.</div></div>
     </div>
 
-    <div class="verdict" id="verdict"></div>
-
     <div class="panel">
       <div class="toolbar">
         <h2 style="margin:0;flex:1">History</h2>
@@ -206,9 +230,14 @@
     </div>
   </section>
 </main>
-<div class="fabs">
-  <button id="toTop" class="alt" aria-label="Back to top" title="Back to top">&#8593;</button>
-  <button id="toStats" aria-label="Jump to corpus stats" title="Corpus stats">&#8595;</button>
+<div class="modal" id="statsModal" role="dialog" aria-modal="true" aria-labelledby="statsTitle">
+  <div class="sheet">
+    <div class="toolbar" style="margin-bottom:12px">
+      <h2 style="flex:1" id="statsTitle">Scorecard</h2>
+      <button class="btn secondary" id="statsClose">Close</button>
+    </div>
+    <div class="verdict" id="verdict"></div>
+  </div>
 </div>
 <footer>
   Letter-frequency findings from Carico et al., <i>Exploratory Research in Clinical and Social Pharmacy</i> (2022), which analyzed every US brand name approved 1985–2020: A, V, X, and Z overrepresented; E, H, T, and S underrepresented; V, Y, Z rising over time. English baseline is Norvig's Google Books letter frequencies. Corpus is the current direct-to-consumer TV rotation plus historic heavy advertisers. Nothing here is a real drug. If it is, that is a coincidence and a problem for someone's trademark attorney.
@@ -418,7 +447,6 @@ function renderDrug(d){
   const all=[...d.sides,...d.serious];
   $('ticker').textContent=`${d.brand.toUpperCase()} may cause ${all.join(', ')}. Individual results may vary. \u00a0\u00a0\u2022\u00a0\u00a0 `.repeat(2);
   $('ticker').style.animationDuration=Math.max(18, all.join(' ').length/9)+'s';
-  renderVerdict(d);
 }
 function renderVerdict(d){
   const w=d.brand.toLowerCase();
@@ -483,14 +511,39 @@ const TONE_LABELS=['clinical','mostly serious','deadpan','absurd','unhinged'];
 toneEl.oninput=()=>$('toneV').textContent=TONE_LABELS[Math.round(+toneEl.value*2)];
 tempEl.oninput=()=>$('tempV').textContent=(+tempEl.value).toFixed(1);
 boostEl.oninput=()=>$('boostV').textContent=(+boostEl.value).toFixed(2).replace(/\.?0+$/,'')+'\u00d7';
-const syncLen=()=>{ if(+lmin.value>+lmax.value) lmax.value=lmin.value; $('lenV').textContent=`${lmin.value}\u2013${lmax.value}`; };
-lmin.oninput=syncLen; lmax.oninput=syncLen;
+// Dual-thumb slider: clamp whichever thumb moved, paint the fill between them,
+// and keep the reachable thumb on top when they stack at either end.
+const syncLen=e=>{
+  let a=+lmin.value, b=+lmax.value;
+  if(a>b){ if(e && e.target===lmax){ lmax.value=b=a; } else { lmin.value=a=b; } }
+  $('lenV').textContent=`${a}\u2013${b}`;
+  const lo=+lmin.min, hi=+lmin.max, pct=v=>100*(v-lo)/(hi-lo);
+  const f=$('lenFill'); f.style.left=pct(a)+'%'; f.style.width=Math.max(0,pct(b)-pct(a))+'%';
+  const stackedHigh = a===b && a>(lo+hi)/2;
+  lmin.style.zIndex = stackedHigh ? 3 : 2;
+  lmax.style.zIndex = stackedHigh ? 2 : 3;
+};
+lmin.oninput=syncLen; lmax.oninput=syncLen; syncLen();
 $('retrain').onclick=()=>setCorpus($('corpus').value);
 $('reset').onclick=()=>setCorpus(DEFAULT_CORPUS);
-$('toTop').onclick=()=>window.scrollTo({top:0});
-$('toStats').onclick=()=>$('stats').scrollIntoView({block:'start'});
-addEventListener('scroll',()=>$('toTop').classList.toggle('show',scrollY>300),{passive:true});
-document.addEventListener('keydown',e=>{ if(e.key===' ' && !['TEXTAREA','INPUT','BUTTON','SELECT'].includes(e.target.tagName)){e.preventDefault();$('go').click();} });
+const setHeadH=()=>document.documentElement.style.setProperty('--headH',document.querySelector('header').offsetHeight+'px');
+setHeadH(); addEventListener('resize',setHeadH);
+$('navTop').onclick=()=>window.scrollTo({top:0});
+$('navCorpus').onclick=()=>$('corpusSection').scrollIntoView({block:'start'});
+const statsModal=$('statsModal');
+const openStats=()=>{
+  if(CURRENT){ renderVerdict(CURRENT); $('statsTitle').textContent=`${CURRENT.brand} scorecard`; }
+  else { $('statsTitle').textContent='Scorecard'; $('verdict').innerHTML='<div class="empty" style="grid-column:1/-1">Generate a drug first — the scorecard rates whatever is in the ad.</div>'; }
+  statsModal.classList.add('open');
+};
+const closeStats=()=>statsModal.classList.remove('open');
+$('navStats').onclick=openStats;
+$('statsClose').onclick=closeStats;
+statsModal.addEventListener('click',e=>{ if(e.target===statsModal) closeStats(); });
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape') closeStats();
+  if(e.key===' ' && !['TEXTAREA','INPUT','BUTTON','SELECT'].includes(e.target.tagName)){e.preventDefault();$('go').click();}
+});
 
 setCorpus(DEFAULT_CORPUS);
 </script>
