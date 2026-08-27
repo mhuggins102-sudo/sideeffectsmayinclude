@@ -22,7 +22,7 @@ All logic is in the one `<script>` block, in this order:
    - `$` is suppressed until `minL` is reached.
    - Accepts only if: length in range, the final two letters can end a real name (`trans[last2]['$']` exists), `pronounceable()` passes (has a vowel, no triple letters, no 4-consonant or 3-vowel runs, vowel ratio 0.25–0.65), and it is not an exact corpus match. Retries up to 60 times.
 4. **Generic name** — `genGeneric()`: short Markov stem that avoids X/Z/H/J/K/W initials (a real USAN rule) + an INN-style suffix from `GENERIC_SUFFIX` (-mab, -tinib, -gliflozin, ...).
-5. **Copy** — `makeDrug()` assembles brand, generic, delivery form, condition, qualifier, tagline, side effects (mild + serious), and "tell your doctor" items from the content pools at the top of the script.
+5. **Copy** — `makeDrug()` assembles brand, generic, delivery form, condition, qualifier, tagline, side effects (mild + serious), "tell your doctor" items, eyebrow, and safety paragraph from the content pools at the top of the script. Every pool entry is `[text, zaniness]` with zaniness 0 (plays it straight), 1 (deadpan), or 2 (absurd). The Seriousness slider (0–2) feeds `tierWeights()`, which weights which tiers `tonePick()`/`toneSample()` draw from: hard-locked to pure tier-0 at the far left, mostly tier-2 with a little tier-1 as straight man at the far right, blended in between. `SAFETY` is three template functions (one per tier) so the ISI paragraph changes register too.
 6. **Scorecard** — `renderVerdict()`: 
    - Unusualness = mean English letter frequency per letter (Norvig Google Books frequencies in `ENGLISH`), the metric from Carico et al. 2022. Lower = more pharma.
    - Rare-letter count, length, nearest real drug by Levenshtein distance (`lev()`).
@@ -40,8 +40,10 @@ All logic is in the one `<script>` block, in this order:
 - Vanilla JS, no framework. Keep functions small and named; the owner iterates fast and reads the source.
 - CSS variables at `:root` for palette and type. Palette: navy `#0D2B4E`, teal `#11A5A0`, saffron `#F5B335`, clinical `#F4F8FA`. Do not drift toward generic cream/terracotta or black/acid-green.
 - Layout is deliberately single-column, max-width 520px, phone-first. Every grid uses `minmax(0,1fr)`; containers have `overflow:hidden`. This was the fix for horizontal overflow on mobile; do not reintroduce `1fr` grids, `padding-left:100%` marquee tricks, or `100vw` widths.
-- Respect `prefers-reduced-motion` (ticker stops).
-- Copy voice: dry, deadpan, parody of DTC ad language. Absurd items sit next to plausible ones; that contrast is the joke. Do not make everything wacky.
+- Visual order is generator panel → ad → stats. DOM order puts the stats aside before the stage; `.lab{order:2}` pushes it below. Generating auto-scrolls to the ad (`showAd()`); fixed corner buttons jump to top and to `#stats`. Smooth scrolling is CSS (`html{scroll-behavior:smooth}`), disabled under `prefers-reduced-motion`.
+- Range inputs have custom track/thumb CSS (24px thumbs, 36px hit area) because default thumbs were too small on touch. Delivery is a `<select>`; "random" follows the Seriousness slider.
+- Respect `prefers-reduced-motion` (ticker stops, scroll snaps).
+- Copy voice: dry, deadpan, parody of DTC ad language. Absurd items sit next to plausible ones; that contrast is the joke. The Seriousness slider exists so users can pick the mix — keep mid-slider as the contrast blend, keep the far left genuinely joke-free, and when adding pool content match the tier: 0 must sound like a real ad, 1 is a joke wearing a lab coat, 2 is a fever dream.
 - Spacebar triggers Generate. Keep that.
 
 ## Known issues / open questions

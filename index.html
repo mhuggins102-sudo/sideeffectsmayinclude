@@ -14,6 +14,8 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--clinical);color:var(--ink);font-family:var(--body);line-height:1.5;overflow-x:hidden;width:100%;max-width:100%}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
   *{min-width:0;max-width:100%}
   img,svg,video{max-width:100%}
   a{color:var(--teal-deep)}
@@ -25,8 +27,6 @@
   header h1{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:.02em;margin:0}
   header h1 span{color:var(--saffron)}
   header p{margin:0;font-size:13px;color:#B7C6D6;font-style:italic}
-  .stat-strip{font-family:var(--mono);font-size:11px;color:#B7C6D6;display:flex;gap:18px;flex-wrap:wrap}
-  .stat-strip b{color:#fff;font-weight:500}
 
   main{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;padding:12px;width:100%;max-width:520px;margin:0 auto;overflow:hidden}
   .lab{order:2}
@@ -36,10 +36,13 @@
   .panel h2{font-family:var(--display);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin:0 0 12px;font-weight:600}
   label{display:block;font-size:13px;font-weight:500;margin:10px 0 4px}
   label small{font-family:var(--mono);color:var(--mute);font-weight:400;float:right}
-  input[type=range]{width:100%;accent-color:var(--teal)}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:36px;margin:0;background:transparent}
+  input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:var(--line)}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:24px;height:24px;border-radius:50%;background:var(--teal);border:3px solid #fff;box-shadow:0 1px 4px rgba(13,43,78,.35);margin-top:-9px}
+  input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:var(--line)}
+  input[type=range]::-moz-range-thumb{width:20px;height:20px;border:3px solid #fff;border-radius:50%;background:var(--teal);box-shadow:0 1px 4px rgba(13,43,78,.35)}
+  select{width:100%;font-family:inherit;font-size:14px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
   .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff}
-  .chip input{accent-color:var(--teal)}
 
   .bars{display:grid;grid-template-columns:repeat(26,minmax(0,1fr));gap:1px;align-items:end;height:90px;margin-top:6px}
   .bar{position:relative;display:flex;flex-direction:column;justify-content:flex-end;height:100%}
@@ -98,7 +101,13 @@
   .empty{font-size:13px;color:var(--mute)}
   .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
   .toast{font-size:12px;color:var(--teal-deep);font-family:var(--mono)}
-  footer{padding:12px 14px 40px;font-size:12px;color:var(--mute);max-width:520px;margin:0 auto;overflow-wrap:anywhere}
+  .fabs{position:fixed;right:14px;bottom:14px;display:flex;flex-direction:column;gap:8px;z-index:50}
+  .fabs button{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--navy);color:#fff;font-size:17px;box-shadow:0 6px 18px rgba(13,43,78,.25);display:flex;align-items:center;justify-content:center;padding:0}
+  .fabs button.alt{background:#fff;color:var(--navy)}
+  #toTop{opacity:0;pointer-events:none;transition:opacity .25s}
+  #toTop.show{opacity:1;pointer-events:auto}
+  .ad,#stats{scroll-margin-top:10px}
+  footer{padding:12px 14px 90px;font-size:12px;color:var(--mute);max-width:520px;margin:0 auto;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -107,14 +116,15 @@
     <h1>PHARMA<span>NOMICON</span></h1>
     <p>Ask your doctor about a word that doesn't exist.</p>
   </div>
-  <div class="stat-strip" id="strip"></div>
 </header>
 
 <main>
-  <aside class="lab">
-    <div class="panel">
+  <div class="panel">
       <h2>Generator</h2>
       <button class="btn big" id="go" style="width:100%">Generate a drug</button>
+      <label>Seriousness <small id="toneV">deadpan</small></label>
+      <input type="range" id="tone" min="0" max="2" step="0.05" value="1">
+      <div class="findings" style="margin-top:2px">Far left plays it completely straight. Far right is a fever dream. The middle mixes the two, which is where the joke lives.</div>
       <label>Novelty <small id="tempV">1.0</small></label>
       <input type="range" id="temp" min="0.4" max="2.2" step="0.1" value="1.0">
       <div class="findings" style="margin-top:2px">Low = hugs the real corpus. High = flattens the odds so rarer letter sequences get a shot.</div>
@@ -126,10 +136,11 @@
         <input type="range" id="lmin" min="4" max="8" value="5" style="flex:1">
         <input type="range" id="lmax" min="6" max="12" value="9" style="flex:1">
       </div>
-      <label>Delivery</label>
-      <div class="row" id="forms"></div>
-    </div>
+      <label for="formSel">Delivery</label>
+      <select id="formSel"></select>
+  </div>
 
+  <aside class="lab" id="stats">
     <div class="panel">
       <h2>Corpus: letter frequency</h2>
       <div class="bars" id="bars"></div>
@@ -188,13 +199,17 @@
       <div class="toolbar">
         <h2 style="margin:0;flex:1">History</h2>
         <button class="btn secondary" id="copy">Copy this drug</button>
-        <button class="btn secondary" id="batch">Generate 10 names</button>
+        <button class="btn secondary" id="batch">Generate 10 (same settings)</button>
         <span class="toast" id="toast"></span>
       </div>
       <div class="history" id="history" style="margin-top:12px"><span class="empty">Nothing yet. Every drug you generate lands here; click one to bring it back.</span></div>
     </div>
   </section>
 </main>
+<div class="fabs">
+  <button id="toTop" class="alt" aria-label="Back to top" title="Back to top">&#8593;</button>
+  <button id="toStats" aria-label="Jump to corpus stats" title="Corpus stats">&#8595;</button>
+</div>
 <footer>
   Letter-frequency findings from Carico et al., <i>Exploratory Research in Clinical and Social Pharmacy</i> (2022), which analyzed every US brand name approved 1985–2020: A, V, X, and Z overrepresented; E, H, T, and S underrepresented; V, Y, Z rising over time. English baseline is Norvig's Google Books letter frequencies. Corpus is the current direct-to-consumer TV rotation plus historic heavy advertisers. Nothing here is a real drug. If it is, that is a coincidence and a problem for someone's trademark attorney.
 </footer>
@@ -210,20 +225,54 @@ const VOWELS = new Set('aeiouy'.split(''));
 const RARE = new Set('xzqvykj'.split(''));
 
 // ---------- CONTENT POOLS ----------
-const FORMS = ['once-daily pill','once-weekly injection','nasal spray','extended-release capsule','dissolvable film','patch you forget is there','chewable','inhaler','monthly infusion','under-the-tongue tablet'];
-const CONDITIONS = [
-  // real-adjacent
-  'moderate to severe plaque psoriasis','type 2 diabetes','chronic migraine','overactive bladder','moderate to severe eczema','ulcerative colitis','narcolepsy','tardive dyskinesia','chronic dry eye','major depressive disorder','restless legs syndrome','irritable bowel syndrome with constipation','generalized anxiety disorder','high LDL cholesterol','hidradenitis suppurativa','atopic dermatitis','vitiligo','uterine fibroids','moderate to severe hot flashes','excessive daytime sleepiness','severe asthma','wet age-related macular degeneration',
-  // absurd
-  'Restless Elbow Syndrome','Chronic Sunday Dread','Persistent Tab Hoarding Disorder','Idiopathic Sock Loss','Post-Meeting Fatigue Syndrome','Recurrent Cart Abandonment','Generalized Reply-All Anxiety','Seasonal Affective Dad Jokes','Adult-Onset Lawn Envy','Treatment-Resistant Group Chat Silence','Intermittent Password Amnesia','Late-Stage Podcast Backlog','Acute Parking Lot Rage','Chronic Tupperware Lid Mismatch','Moderate to Severe Small Talk Intolerance','Early-Onset Thermostat Disputes','Idiopathic Printer Hostility','Recurrent Phantom Phone Vibration','Persistent Unsubscribe Failure','Age-Related Music Opinion Stiffening','Nocturnal Fridge Wandering','Ambient Dread of the Check Engine Light','Chronic Middle-Seat Syndrome','Refractory Voicemail Avoidance','Post-Vacation Inbox Shock','Bilateral Sock Drawer Asymmetry','Progressive Remote Control Misplacement','Compulsive Weather App Refreshing','Moderate to Severe Standing Desk Regret','Recurrent Grill Lighter Failure','Chronic Youth Sports Bleacher Back','Idiopathic Yard Sale Tachycardia'
+// Every entry is [text, zaniness]: 0 plays it straight, 1 is deadpan, 2 is absurd.
+// The Seriousness slider (0-2) decides which tiers get drawn; see tierWeights().
+const tier=(arr,zn)=>arr.map(t=>[t,zn]);
+const FORMS=[
+  ...tier(['once-daily pill','once-weekly injection','nasal spray','extended-release capsule','dissolvable film','chewable tablet','inhaler','monthly infusion','under-the-tongue tablet','topical foam'],0),
+  ...tier(['patch you forget is there','pen you click with quiet confidence'],1),
+  ...tier(['mist','pill within a larger, decorative pill'],2)
 ];
-const QUALIFIERS = ['in adults','in adults and children 12 years and older','in adults who have tried at least one other treatment','in adults with an inadequate response to sighing','in adults who are otherwise fine','in patients whose symptoms persist despite a sternly worded email','in adults 18 and older who have seen the commercial at least twice'];
-const TAGLINES = [
-  'Ask your doctor about {N}.','{N}. Because tomorrow starts with fewer symptoms.','With {N}, you could be walking through a meadow by Tuesday.','{N}. Move forward. Or sideways. Any direction, really.','Say yes to {N}. Say it slowly, so the pharmacist understands.','{N}: clinically proven to be a word.','Take back your afternoons with {N}.','{N}. The feeling of a slow-motion picnic, in pill form.','One {N}. Zero explanations to your in-laws.','{N} is not for everyone. It is for you, specifically. We checked.','This is your life on {N}: there is a golden retriever now.','{N}. Finally, a name harder to spell than your condition.'
+const CONDITIONS=[
+  ...tier(['moderate to severe plaque psoriasis','type 2 diabetes','chronic migraine','overactive bladder','moderate to severe eczema','ulcerative colitis','narcolepsy','tardive dyskinesia','chronic dry eye','major depressive disorder','restless legs syndrome','irritable bowel syndrome with constipation','generalized anxiety disorder','high LDL cholesterol','hidradenitis suppurativa','atopic dermatitis','vitiligo','uterine fibroids','moderate to severe hot flashes','excessive daytime sleepiness','severe asthma','wet age-related macular degeneration','moderate to severe rheumatoid arthritis','Crohn\u2019s disease','chronic obstructive pulmonary disease','episodic migraine','chronic idiopathic urticaria','obstructive sleep apnea'],0),
+  ...tier(['Restless Elbow Syndrome','Post-Meeting Fatigue Syndrome','Intermittent Password Amnesia','Compulsive Weather App Refreshing','Persistent Tab Hoarding Disorder','Generalized Reply-All Anxiety','Recurrent Phantom Phone Vibration','Persistent Unsubscribe Failure','Chronic Sunday Dread','Moderate to Severe Small Talk Intolerance','Refractory Voicemail Avoidance','Post-Vacation Inbox Shock','Late-Stage Podcast Backlog','Chronic Middle-Seat Syndrome','Early-Onset Thermostat Disputes','Treatment-Resistant Group Chat Silence','Ambient Dread of the Check Engine Light','Refractory Snooze Button Dependence','Recurrent Cart Abandonment','Sudden-Onset Hobby Acquisition'],1),
+  ...tier(['Idiopathic Sock Loss','Seasonal Affective Dad Jokes','Adult-Onset Lawn Envy','Acute Parking Lot Rage','Chronic Tupperware Lid Mismatch','Idiopathic Printer Hostility','Age-Related Music Opinion Stiffening','Nocturnal Fridge Wandering','Bilateral Sock Drawer Asymmetry','Progressive Remote Control Misplacement','Moderate to Severe Standing Desk Regret','Recurrent Grill Lighter Failure','Chronic Youth Sports Bleacher Back','Idiopathic Yard Sale Tachycardia','Hereditary Boat Interest','Unexplained Kitchen Island Yearning','Acute Awareness of Other People Chewing','Weaponized Brunch Opinions'],2)
 ];
-const MILD = ['headache','nausea','dry mouth','dizziness','fatigue','joint pain','runny nose','mild confusion about which day it is','a sudden fondness for kayaking','an urge to repaint the guest room','upper respiratory infection','constipation','injection-site redness','trouble sleeping','vivid dreams about spreadsheets','loss of appetite','increased appetite, specifically for pretzels','unexplained humming','heightened opinions about lawn care','temporary inability to remember passwords','a feeling that someone is standing behind you','excessive agreement with podcasts','muscle spasms','mild sunburn even indoors','tingling in the hands','sudden clarity about a 2009 argument','a taste of pennies','slight drift toward jazz','the sensation of having forgotten to lock the car','decreased interest in sequels','ringing in the ears','back pain','sneezing at inopportune moments','difficulty pronouncing this medication'];
-const SERIOUS = ['serious allergic reactions, including swelling of the face, lips, tongue, or throat','thoughts of joining a cover band','liver problems','changes in mood or behavior, including an unwavering belief that you could fix the fence yourself','new or worsening heart failure','a brief but complete loss of the ability to parallel park','severe skin reactions','sudden, unexplained proficiency in canoeing','increased risk of infections','the appearance of a golden retriever you do not remember adopting','pancreatitis','irreversible enthusiasm for pickleball','low blood sugar','tremors','fainting','seizures','a compulsion to finish other people\u2019s crossword puzzles','vision changes, including seeing the meadow from the commercial while at work','kidney problems','muscle weakness','gallbladder problems','hearing the phrase \u201cask your doctor\u201d when no one has spoken','blood clots','rare cases of waking up in a different, nicer kitchen'];
-const TELL_DOC = ['have or have had liver problems','are pregnant, plan to become pregnant, or have met someone who is','have a history of fainting near lawn equipment','take blood thinners, antidepressants, or advice from a brother-in-law','have ever been to a Sandals resort','are allergic to any of the seventeen inactive ingredients','plan to operate heavy machinery, including a riding mower','have a known sensitivity to gentle acoustic guitar'];
+const QUALIFIERS=[
+  ...tier(['in adults','in adults and children 12 years and older','in adults who have tried at least one other treatment','in adults with moderate to severe symptoms','in adults for whom other treatments have not worked or are not appropriate'],0),
+  ...tier(['in adults who are otherwise fine','in adults 18 and older who have seen the commercial at least twice','in adults with a documented history of being like this'],1),
+  ...tier(['in adults with an inadequate response to sighing','in patients whose symptoms persist despite a sternly worded email','in adults, their neighbors, and one specific coworker','in anyone the golden retriever approaches first'],2)
+];
+const TAGLINES=[
+  ...tier(['Ask your doctor about {N}.','{N}. Relief that lasts.','Life doesn\u2019t pause. Neither should you. {N}.','{N}. Made for moving forward.','{N} could help you stay you.','This is living. This is {N}.','{N}. Because every day counts.','Tomorrow is waiting. {N}.'],0),
+  ...tier(['{N}. Because tomorrow starts with fewer symptoms.','{N}: clinically proven to be a word.','Take back your afternoons with {N}.','{N}. From the makers of the other one.','{N} works differently. We won\u2019t say how.','{N}. Finally, a name harder to spell than your condition.','One {N}. Zero explanations to your in-laws.','{N}. Ask your doctor. Ask them again. They love that.'],1),
+  ...tier(['With {N}, you could be walking through a meadow by Tuesday.','{N}. Move forward. Or sideways. Any direction, really.','Say yes to {N}. Say it slowly, so the pharmacist understands.','{N}. The feeling of a slow-motion picnic, in pill form.','{N} is not for everyone. It is for you, specifically. We checked.','This is your life on {N}: there is a golden retriever now.','{N}. Because the commercial had horses in it.','Where does {N} end and you begin? Great question.','{N}. Results may vary. Yours will be discussed at Thanksgiving.','{N}. The word your dreams keep whispering.'],2)
+];
+const MILD=[
+  ...tier(['headache','nausea','dry mouth','dizziness','fatigue','joint pain','runny nose','upper respiratory infection','constipation','diarrhea','injection-site redness','trouble sleeping','loss of appetite','muscle spasms','tingling in the hands','ringing in the ears','back pain','rash','cough','abdominal discomfort'],0),
+  ...tier(['mild confusion about which day it is','vivid dreams about spreadsheets','temporary inability to remember passwords','heightened opinions about lawn care','a taste of pennies','slight drift toward jazz','decreased interest in sequels','difficulty pronouncing this medication','sneezing at inopportune moments','the sensation of having forgotten to lock the car','increased appetite, specifically for pretzels','a strong urge to check on the mail','mild nostalgia for restaurants that no longer exist'],1),
+  ...tier(['a sudden fondness for kayaking','unexplained humming','an urge to repaint the guest room','a feeling that someone is standing behind you','excessive agreement with podcasts','mild sunburn even indoors','sudden clarity about a 2009 argument','spontaneous waving at boats','brief episodes of believing you are in a commercial','the conviction that a horse remembers you','warm regard for a bench you saw once','intermittent jazz hands'],2)
+];
+const SERIOUS=[
+  ...tier(['serious allergic reactions, including swelling of the face, lips, tongue, or throat','liver problems','new or worsening heart failure','severe skin reactions','increased risk of serious infections','pancreatitis','low blood sugar','tremors','fainting','seizures','kidney problems','muscle weakness','gallbladder problems','blood clots','vision changes','changes in mood or behavior'],0),
+  ...tier(['thoughts of joining a cover band','a brief but complete loss of the ability to parallel park','irreversible enthusiasm for pickleball','a compulsion to finish other people\u2019s crossword puzzles','changes in mood or behavior, including an unwavering belief that you could fix the fence yourself','sudden, unexplained proficiency in canoeing'],1),
+  ...tier(['the appearance of a golden retriever you do not remember adopting','vision changes, including seeing the meadow from the commercial while at work','hearing the phrase \u201cask your doctor\u201d when no one has spoken','rare cases of waking up in a different, nicer kitchen','full-body knowledge of what the ocean wants','temporary possession by the spirit of a regional sales manager','the unshakable sense that the moon has noticed you'],2)
+];
+const TELL_DOC=[
+  ...tier(['have or have had liver problems','have kidney problems','are pregnant or plan to become pregnant','are breastfeeding or plan to breastfeed','have a history of heart problems','have recently received or are scheduled to receive a vaccine','take blood thinners or antidepressants'],0),
+  ...tier(['take blood thinners, antidepressants, or advice from a brother-in-law','are allergic to any of the seventeen inactive ingredients','plan to operate heavy machinery, including a riding mower','have ever lied to a dentist'],1),
+  ...tier(['have a history of fainting near lawn equipment','have ever been to a Sandals resort','are pregnant, plan to become pregnant, or have met someone who is','have a known sensitivity to gentle acoustic guitar','maintain a rivalry with a specific bird'],2)
+];
+const EYEBROWS=[
+  ...tier(['Now approved','Once weekly','Now available','Prescription only'],0),
+  ...tier(['Ask about the savings card','Now in a pen','From the makers of several other words'],1),
+  ...tier(['New from a company you\u2019ve never heard of','Not a cure. A lifestyle.','As dreamed by our founder','Approved on a Friday afternoon'],2)
+];
+const SAFETY=[
+  [d=>`Do not take ${d.brand} if you are allergic to ${d.generic} or any of the ingredients in ${d.brand}. Tell your doctor if you ${d.tell[0]}, or ${d.tell[1]}. Tell your doctor about all the medicines you take, including prescription and over-the-counter medicines, vitamins, and herbal supplements. Do not stop taking ${d.brand} without talking to your doctor.`,0],
+  [d=>`Do not take ${d.brand} if you are allergic to ${d.brand}, ${d.generic}, or the concept of ${d.brand}. Tell your doctor if you ${d.tell[0]}, or ${d.tell[1]}. ${d.brand} may affect the way other medicines work, and other medicines may affect the way ${d.brand} feels about itself. Do not stop taking ${d.brand} without talking to your doctor, your pharmacist, and at least one person who will remember this conversation.`,1],
+  [d=>`Do not take ${d.brand} while asleep, while pretending to be asleep, or to win an argument. Tell your doctor if you ${d.tell[0]}, or ${d.tell[1]} \u2014 your doctor is keeping a list. ${d.brand} may interact with other medicines, houseplants, and the overall mood of a room. If you must stop taking ${d.brand}, do it politely. ${d.brand} remembers.`,2]
+];
 const GENERIC_SUFFIX = ['mab','tinib','glutide','gliflozin','lisib','ciclib','sertib','cept','rsen','parib','zumab','ximab','lutamide','tegravir','prazole','statin','sartan','dipine','gepant','ditan','tide','ase','lanib','nercept','platin','vudine','fenacin','pirone','zolam','tadine'];
 
 // ---------- MODEL ----------
@@ -303,28 +352,57 @@ const pick=a=>a[Math.floor(Math.random()*a.length)];
 const shuffle=a=>{const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;};
 function cap(s){return s[0].toUpperCase()+s.slice(1);}
 
+// ---------- TONE ----------
+// Maps the Seriousness slider (0-2) to weights for the three zaniness tiers.
+// Hard-locks at the ends: 0 is pure regulatory copy, 2 keeps a little deadpan
+// as a straight man but drops the serious tier entirely.
+function tierWeights(tone){
+  if(tone<=0.05) return [1,0,0];
+  if(tone>=1.95) return [0,0.25,1];
+  const w=zn=>{const d=Math.abs(tone-zn); return d>1.5?0:Math.max(0.02,1-0.6*d);};
+  return [w(0),w(1),w(2)];
+}
+function tonePick(pool,tone){
+  const ws=tierWeights(tone);
+  const items=[]; let sum=0;
+  for(const [t,zn] of pool){ const w=ws[zn]; if(w>0){ items.push([t,w]); sum+=w; } }
+  let r=Math.random()*sum;
+  for(const [t,w] of items){ r-=w; if(r<=0) return t; }
+  return items[items.length-1][0];
+}
+function toneSample(pool,tone,n){
+  const out=[], used=new Set();
+  for(let g=0; out.length<n && g<250; g++){
+    const t=tonePick(pool,tone);
+    if(!used.has(t)){ used.add(t); out.push(t); }
+  }
+  return out;
+}
+
 // Carico-style unusualness: mean English frequency per letter (lower = more pharma)
 function englishScore(w){ return [...w.toLowerCase()].reduce((a,c)=>a+(ENGLISH[c]||0),0)/w.length; }
 function corpusMeanScore(){ return CORPUS.reduce((a,n)=>a+englishScore(n),0)/CORPUS.length; }
 
 // ---------- DRUG ASSEMBLY ----------
 function makeDrug(){
-  const minL=+lmin.value, maxL=+lmax.value, temp=+tempEl.value, boost=+boostEl.value;
+  const minL=+lmin.value, maxL=+lmax.value, temp=+tempEl.value, boost=+boostEl.value, tone=+toneEl.value;
   const raw=genWord(minL,maxL,temp,boost);
   const brand=cap(raw);
-  const form=document.querySelector('input[name=form]:checked')?.value || pick(FORMS);
-  const cond=pick(CONDITIONS);
-  const qual=pick(QUALIFIERS);
-  const sides=shuffle(MILD).slice(0,5+Math.floor(Math.random()*4));
-  const serious=shuffle(SERIOUS).slice(0,2+Math.floor(Math.random()*3));
-  const tell=shuffle(TELL_DOC).slice(0,2);
-  return {brand, generic:genGeneric(brand), form, cond, qual, tagline:pick(TAGLINES).replaceAll('{N}',brand.toUpperCase()), sides, serious, tell,
-          eyebrow:pick(['Now approved','New from a company you\u2019ve never heard of','Once weekly','Now in a pen','Ask about the savings card','Not a cure. A lifestyle.'])};
+  const form=$('formSel').value || tonePick(FORMS,tone);
+  const d={brand, generic:genGeneric(brand), form,
+    cond:tonePick(CONDITIONS,tone), qual:tonePick(QUALIFIERS,tone),
+    tagline:tonePick(TAGLINES,tone).replaceAll('{N}',brand.toUpperCase()),
+    sides:toneSample(MILD,tone,5+Math.floor(Math.random()*4)),
+    serious:toneSample(SERIOUS,tone,2+Math.floor(Math.random()*3)),
+    tell:toneSample(TELL_DOC,tone,2),
+    eyebrow:tonePick(EYEBROWS,tone)};
+  d.safety=tonePick(SAFETY,tone)(d);
+  return d;
 }
 
 // ---------- RENDER ----------
 const $=id=>document.getElementById(id);
-const tempEl=$('temp'), boostEl=$('boost'), lmin=$('lmin'), lmax=$('lmax');
+const tempEl=$('temp'), boostEl=$('boost'), lmin=$('lmin'), lmax=$('lmax'), toneEl=$('tone');
 let HISTORY=[]; let CURRENT=null;
 
 function renderDrug(d){
@@ -336,7 +414,7 @@ function renderDrug(d){
   $('tagline').textContent=d.tagline;
   $('indication').innerHTML=`<b>${d.brand}</b> is a ${d.form} for the treatment of <b>${d.cond}</b> ${d.qual}.`;
   $('sides').innerHTML=`<ul>${d.sides.map(s=>`<li>${s}</li>`).join('')}</ul><div class="warn">Serious side effects may include ${d.serious.join('; ')}.</div>`;
-  $('safety').innerHTML=`Do not take ${d.brand} if you are allergic to ${d.brand}, ${d.generic}, or the concept of ${d.brand}. Tell your doctor if you ${d.tell[0]}, or ${d.tell[1]}. ${d.brand} may affect the way other medicines work, and other medicines may affect the way ${d.brand} feels about itself. Do not stop taking ${d.brand} without talking to your doctor, your pharmacist, and at least one person who will remember this conversation.`;
+  $('safety').textContent=d.safety;
   const all=[...d.sides,...d.serious];
   $('ticker').textContent=`${d.brand.toUpperCase()} may cause ${all.join(', ')}. Individual results may vary. \u00a0\u00a0\u2022\u00a0\u00a0 `.repeat(2);
   $('ticker').style.animationDuration=Math.max(18, all.join(' ').length/9)+'s';
@@ -376,7 +454,6 @@ function renderStats(){
   const bg=Object.entries(MODEL.bigrams).sort((a,b)=>b[1]-a[1]).slice(0,14);
   $('bigrams').innerHTML=`<b>Top initials:</b> ${inits.map(x=>`${x[0].toUpperCase()} (${x[1]})`).join(', ')}.<br><b>Top letter pairs:</b> ${bg.map(x=>`<span style="font-family:var(--mono)">${x[0]}</span>`).join(' ')}.<br>The generator is an order-2 Markov chain over these names, so every 3-letter sequence it emits exists somewhere in a real drug.`;
   $('corpusN').textContent=CORPUS.length;
-  $('strip').innerHTML=`<span>corpus <b>${CORPUS.length}</b></span><span>Z rate <b>${(pct('z')/ENGLISH.z).toFixed(0)}\u00d7 English</b></span><span>X rate <b>${(pct('x')/ENGLISH.x).toFixed(0)}\u00d7</b></span><span>Q rate <b>${(pct('q')/ENGLISH.q).toFixed(0)}\u00d7</b></span>`;
 }
 function renderHistory(){
   if(!HISTORY.length) return;
@@ -393,21 +470,27 @@ function setCorpus(text){
 }
 
 // ---------- WIRING ----------
-$('forms').innerHTML=`<label class="chip"><input type="radio" name="form" value="" checked>random</label>`+FORMS.slice(0,5).map(f=>`<label class="chip"><input type="radio" name="form" value="${f}">${f}</label>`).join('');
-$('go').onclick=()=>{const d=makeDrug(); HISTORY.unshift(d); HISTORY=HISTORY.slice(0,40); renderDrug(d); renderHistory();};
-$('batch').onclick=()=>{ for(let i=0;i<10;i++){HISTORY.unshift(makeDrug());} HISTORY=HISTORY.slice(0,40); renderDrug(HISTORY[0]); renderHistory(); };
-$('history').onclick=e=>{const b=e.target.closest('button'); if(b) renderDrug(HISTORY[+b.dataset.i]);};
+$('formSel').innerHTML=`<option value="">random (follows Seriousness)</option>`+FORMS.map(f=>`<option value="${f[0]}">${f[0]}</option>`).join('');
+const showAd=()=>$('ad').scrollIntoView({block:'start'});
+$('go').onclick=()=>{const d=makeDrug(); HISTORY.unshift(d); HISTORY=HISTORY.slice(0,40); renderDrug(d); renderHistory(); showAd();};
+$('batch').onclick=()=>{ for(let i=0;i<10;i++){HISTORY.unshift(makeDrug());} HISTORY=HISTORY.slice(0,40); renderDrug(HISTORY[0]); renderHistory(); showAd(); };
+$('history').onclick=e=>{const b=e.target.closest('button'); if(b){renderDrug(HISTORY[+b.dataset.i]); showAd();}};
 $('copy').onclick=async()=>{ if(!CURRENT){$('toast').textContent='Generate something first.';return;}
   const d=CURRENT; const txt=`${d.brand}\u2122 (${d.generic})\n${d.tagline}\n\n${d.brand} is a ${d.form} for the treatment of ${d.cond} ${d.qual}.\n\nSide effects may include: ${d.sides.join(', ')}.\nSerious side effects may include ${d.serious.join('; ')}.\n\nTell your doctor if you ${d.tell[0]}, or ${d.tell[1]}.`;
   try{ await navigator.clipboard.writeText(txt); $('toast').textContent='Copied.'; }catch{ $('toast').textContent='Clipboard blocked; select and copy manually.'; }
   setTimeout(()=>$('toast').textContent='',2000); };
+const TONE_LABELS=['clinical','mostly serious','deadpan','absurd','unhinged'];
+toneEl.oninput=()=>$('toneV').textContent=TONE_LABELS[Math.round(+toneEl.value*2)];
 tempEl.oninput=()=>$('tempV').textContent=(+tempEl.value).toFixed(1);
 boostEl.oninput=()=>$('boostV').textContent=(+boostEl.value).toFixed(2).replace(/\.?0+$/,'')+'\u00d7';
 const syncLen=()=>{ if(+lmin.value>+lmax.value) lmax.value=lmin.value; $('lenV').textContent=`${lmin.value}\u2013${lmax.value}`; };
 lmin.oninput=syncLen; lmax.oninput=syncLen;
 $('retrain').onclick=()=>setCorpus($('corpus').value);
 $('reset').onclick=()=>setCorpus(DEFAULT_CORPUS);
-document.addEventListener('keydown',e=>{ if(e.key===' ' && !['TEXTAREA','INPUT','BUTTON'].includes(e.target.tagName)){e.preventDefault();$('go').click();} });
+$('toTop').onclick=()=>window.scrollTo({top:0});
+$('toStats').onclick=()=>$('stats').scrollIntoView({block:'start'});
+addEventListener('scroll',()=>$('toTop').classList.toggle('show',scrollY>300),{passive:true});
+document.addEventListener('keydown',e=>{ if(e.key===' ' && !['TEXTAREA','INPUT','BUTTON','SELECT'].includes(e.target.tagName)){e.preventDefault();$('go').click();} });
 
 setCorpus(DEFAULT_CORPUS);
 </script>
